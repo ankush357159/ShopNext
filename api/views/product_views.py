@@ -94,7 +94,7 @@ def updateProduct(request, pk):
 
     serializer = ProductSerializer(product, many=False)
     return Response(serializer.data)
-    # For api testing, all fields need to be passed even if only one field is required to be changed.
+    # For api testing, all fields need to be passed even if only one field is required  # to be changed.
 
 # Delete a Product
 @api_view(['DELETE'])
