@@ -34,15 +34,18 @@ INSTALLED_APPS = [
 
     #Third party apps
     'rest_framework',
-    'corsheaders'
+    'corsheaders',
+    'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
+
+
 ]
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=10),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=10),
     'ROTATE_REFRESH_TOKENS': False,
-    'BLACKLIST_AFTER_ROTATION': True,
-    'UPDATE_LAST_LOGIN': False,
+    'BLACKLIST_AFTER_ROTATION': False,
 
     'ALGORITHM': 'HS256',
     'VERIFYING_KEY': None,
@@ -62,8 +65,8 @@ SIMPLE_JWT = {
     'JTI_CLAIM': 'jti',
 
     'SLIDING_TOKEN_REFRESH_EXP_CLAIM': 'refresh_exp',
-    'SLIDING_TOKEN_LIFETIME': timedelta(minutes=5),
-    'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
+    'SLIDING_TOKEN_LIFETIME': timedelta(days=15),
+    'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=15),
 }
 
 MIDDLEWARE = [
@@ -124,19 +127,22 @@ REST_FRAMEWORK = {
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-        # 'OPTIONS': {
-        #     'max_similarity':0.5 
-        # }
+        'OPTIONS': {
+            'max_similarity': 1,
+        }
+      
 
     },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-        # 'OPTIONS': {
-        #     'min_length':6, #Lower strength for dev usage, not in production
-        # }
+        'OPTIONS': {
+            'min_length': 6,
+        }
+       
     },
     {
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+               
     },
     {
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
