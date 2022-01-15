@@ -1,4 +1,3 @@
-from typing import Tuple
 from django.db import models
 from django.contrib.auth.models import User
 
@@ -29,3 +28,39 @@ class Product(models.Model):
 
     def __str__(self):
         return self.name
+
+
+
+class UserProfile(models.Model):
+    username = models.ForeignKey(User, related_name='profile', on_delete=models.CASCADE)
+    email = models.EmailField(max_length=254, unique=True, verbose_name='email address')
+    mobile = models.IntegerField(unique=True)
+    avatar = models.ImageField(null=True, blank=True, upload_to="avatars/")
+    about = models.TextField(null=True, blank=True)
+    first_name = models.CharField(max_length=25, null=True)
+    last_name = models.CharField(max_length=25, null=True)
+    is_active = models.BooleanField(default=True)
+    is_staff = models.BooleanField(default=False)
+    is_admin = models.BooleanField(default=False)
+    joined_date = models.DateField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+    def __str__(self):
+        return self.username
+
+
+
+
+
+
+
+# class Movie(models.Model):
+#     title = models.CharField(max_length=100)
+#     genre = models.CharField(max_length=100)
+#     year = models.IntegerField()
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     updated_at = models.DateTimeField(auto_now=True)
+#     creator = models.ForeignKey('auth.User', related_name='movies', on_delete=models.CASCADE)
+
+#     class Meta:
+#         ordering = ['-id']

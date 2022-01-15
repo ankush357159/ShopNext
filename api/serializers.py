@@ -1,7 +1,10 @@
-from django.db.models import fields
+from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from api.models import *
+from rest_framework.validators import UniqueValidator
+from rest_framework_simplejwt.tokens import RefreshToken
+from api.models import Product
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -9,3 +12,118 @@ class ProductSerializer(serializers.ModelSerializer):
         model = Product
         fields = "__all__"
 
+
+# JWT simple token serializer
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super(MyTokenObtainPairSerializer, cls).get_token(user)
+
+        # Add custom claims
+        token["email"] = user.email
+        token["message"] = "Welcome to ShopNext"
+
+        return token
+
+
+class RegisterUserSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(required=True, max_length=50)
+    password = serializers.CharField(
+        write_only=True, required=True, validators=[validate_password]
+    )
+    email = serializers.EmailField(
+        max_length=255,
+        allow_blank=False,
+        validators=[UniqueValidator(queryset=User.objects.all())],
+    )
+    first_name = serializers.CharField(required=True, max_length=50)
+    last_name = serializers.CharField(max_length=50)
+
+    class Meta:
+        model = User
+        fields = ["id", "username", "password", "email", "first_name", "last_name"]
+
+    def create(self, validated_data):
+        user = User(
+            username=validated_data["username"],
+            email=validated_data["email"],
+            first_name=validated_data["first_name"],
+            last_name=validated_data["last_name"],
+        )
+        user.set_password(validated_data["password"])
+        user.save()
+        return user
+
+class ChangePasswordSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, required=True, validators= [validate_password])
+    old_password = serializers.CharField(write_only=True, required=True)
+
+    class Meta:
+        model = User
+        fields = ['old_password', 'password']
+
+        def validate_old_password(self, value):
+            user = self.context['request'].user
+            if not user.check_password(value):
+                raise serializers.ValidationError({"old_password": "Old password is not correct" })
+            return 
+
+        def update(self, instance, validate_data):
+            instance.set_password(validate_data['password'])
+            instance.save()
+
+            return instance
+
+
+
+
+
+
+
+
+
+
+# Accepted parameters taken by serializers 
+# read_only, write_only, required, default, initial, source,
+# label, help_text, style, error_messages, allow_empty,
+# instance, data, partial, context, allow_null
+
+# Update User profile
+
+class UpdateUserSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(required=True)
+
+    class Meta:
+        model = User
+        fields = ('username', 'first_name', 'last_name', 'email')
+        extra_kwargs = {
+            'first_name': {'required': True},
+            'last_name': {'required': True},
+        }
+
+    def validate_email(self, value):
+        user = self.context['request'].user
+        if User.objects.exclude(pk=user.pk).filter(email=value).exists():
+            raise serializers.ValidationError({"email": "This email is already in use."})
+        return value
+
+    def validate_username(self, value):
+        user = self.context['request'].user
+        if User.objects.exclude(pk=user.pk).filter(username=value).exists():
+            raise serializers.ValidationError({"username": "This username is already in use."})
+        return value
+
+    def update(self, instance, validated_data):
+        user = self.context['request'].user
+
+        if user.pk != instance.pk:
+            raise serializers.ValidationError({"authorize": "You dont have permission for this user."})
+
+        instance.first_name = validated_data['first_name']
+        instance.last_name = validated_data['last_name']
+        instance.email = validated_data['email']
+        instance.username = validated_data['username']
+
+        instance.save()
+
+        return instance
